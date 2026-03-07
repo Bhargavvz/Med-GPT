@@ -43,7 +43,7 @@ training:
     eval_steps: 500
     save_steps: 500
     logging_steps: 10
-    max_seq_length: 1024
+    max_seq_length: 2048
 
   # Stage 2: Fine-tuning on VQA-RAD + SLAKE + PathVQA
   finetune:
@@ -61,14 +61,14 @@ training:
     eval_steps: 100
     save_steps: 100
     logging_steps: 10
-    max_seq_length: 1024
+    max_seq_length: 2048
 
   # Common settings
   bf16: true
   fp16: false
   seed: 42
   dataloader_num_workers: 4
-  report_to: "wandb"    # or "tensorboard" or "none"
+  report_to: "none"    # set to "wandb" or "tensorboard" if you want logging
 
 # =============================================================================
 # Data Configuration

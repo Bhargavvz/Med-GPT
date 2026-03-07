@@ -18,7 +18,7 @@ from peft import (
     TaskType,
 )
 from transformers import (
-    Qwen2_5_VLForConditionalGeneration,
+    AutoModelForVision2Seq,
     AutoProcessor,
     BitsAndBytesConfig,
 )
@@ -95,10 +95,11 @@ class MedGPT:
         elif quant_setting == "8bit":
             quant_config = BitsAndBytesConfig(load_in_8bit=True)
 
-        # Load model
+        # Load model using AutoModelForVision2Seq — this auto-detects
+        # the correct class (Qwen3VL, Qwen2.5VL, etc.)
         load_kwargs = {
             "pretrained_model_name_or_path": self.model_name,
-            "torch_dtype": torch_dtype,
+            "dtype": torch_dtype,
             "device_map": model_config.get("device_map", "auto"),
             "trust_remote_code": model_config.get("trust_remote_code", True),
         }
@@ -106,12 +107,7 @@ class MedGPT:
         if quant_config:
             load_kwargs["quantization_config"] = quant_config
 
-        # Try Qwen2.5-VL first (Qwen3-VL may use same class or newer)
-        try:
-            model = Qwen2_5_VLForConditionalGeneration.from_pretrained(**load_kwargs)
-        except Exception:
-            from transformers import AutoModelForVision2Seq
-            model = AutoModelForVision2Seq.from_pretrained(**load_kwargs)
+        model = AutoModelForVision2Seq.from_pretrained(**load_kwargs)
 
         # Prepare for k-bit training if quantized
         if quant_config and self.training:

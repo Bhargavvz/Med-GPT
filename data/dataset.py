@@ -37,7 +37,7 @@ class MedicalVQADataset(Dataset):
         self,
         data_file: str,
         processor=None,
-        max_seq_length: int = 1024,
+        max_seq_length: int = 2048,
         is_training: bool = True,
         include_rationale: bool = True,
     ):
@@ -149,12 +149,11 @@ class MedicalVQADataset(Dataset):
             image = Image.new("RGB", (224, 224), (0, 0, 0))
 
         # Process with the Qwen3-VL processor
+        # Do NOT truncate — truncation breaks image token counts
         inputs = self.processor(
             text=[text],
             images=[image],
             padding=False,
-            truncation=True,
-            max_length=self.max_seq_length,
             return_tensors="pt",
         )
 
@@ -184,8 +183,6 @@ class MedicalVQADataset(Dataset):
                 text=[text_no_answer],
                 images=[image],
                 padding=False,
-                truncation=True,
-                max_length=self.max_seq_length,
                 return_tensors="pt",
             )
             prompt_length = inputs_no_answer["input_ids"].shape[1]
