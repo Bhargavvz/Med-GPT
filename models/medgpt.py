@@ -18,7 +18,7 @@ from peft import (
     TaskType,
 )
 from transformers import (
-    AutoModelForVision2Seq,
+    AutoModelForImageTextToText,
     AutoProcessor,
     BitsAndBytesConfig,
 )
@@ -107,7 +107,7 @@ class MedGPT:
         if quant_config:
             load_kwargs["quantization_config"] = quant_config
 
-        model = AutoModelForVision2Seq.from_pretrained(**load_kwargs)
+        model = AutoModelForImageTextToText.from_pretrained(**load_kwargs)
 
         # Prepare for k-bit training if quantized
         if quant_config and self.training:
