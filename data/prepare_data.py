@@ -9,6 +9,7 @@ import argparse
 import json
 import os
 import sys
+import traceback
 from pathlib import Path
 from io import BytesIO
 from collections import Counter
@@ -52,7 +53,7 @@ def prepare_vqa_rad(output_dir: str, images_dir: str) -> list:
     print("Preparing VQA-RAD (flaviagiammarino/vqa-rad)")
     print("=" * 60)
 
-    ds = load_dataset("flaviagiammarino/vqa-rad", trust_remote_code=True)
+    ds = load_dataset("flaviagiammarino/vqa-rad")
     img_dir = os.path.join(images_dir, "vqa_rad")
     os.makedirs(img_dir, exist_ok=True)
 
@@ -92,29 +93,56 @@ def prepare_vqa_rad(output_dir: str, images_dir: str) -> list:
 # =========================================================================
 # SLAKE
 # =========================================================================
+SLAKE_SOURCES = [
+    "mdwiratathya/SLAKE-vqa-english",
+    "BoKelvin/SLAKE",
+    "Voxel51/SLAKE",
+]
+
+
 def prepare_slake(output_dir: str, images_dir: str) -> list:
     """Download and prepare SLAKE dataset (English only)."""
     print("\n" + "=" * 60)
-    print("Preparing SLAKE (BoKelworker/SLAKE)")
+    print("Preparing SLAKE")
     print("=" * 60)
 
-    ds = load_dataset("BoKelworker/SLAKE", trust_remote_code=True)
+    # Try multiple HuggingFace sources for SLAKE
+    ds = None
+    for source in SLAKE_SOURCES:
+        try:
+            print(f"  Trying source: {source}")
+            ds = load_dataset(source)
+            print(f"  ✓ Loaded from: {source}")
+            break
+        except Exception as e:
+            print(f"  ✗ Failed: {e}")
+            continue
+
+    if ds is None:
+        print("  [ERROR] Could not load SLAKE from any source. Skipping.")
+        return []
+
     img_dir = os.path.join(images_dir, "slake")
     os.makedirs(img_dir, exist_ok=True)
+
+    # Inspect the first sample to understand column names
+    first_split = list(ds.keys())[0]
+    columns = ds[first_split].column_names
+    print(f"  Available columns: {columns}")
 
     all_samples = []
     for split_name in ds:
         split = ds[split_name]
         print(f"  Processing split '{split_name}': {len(split)} samples")
         for idx, sample in enumerate(tqdm(split, desc=f"  {split_name}")):
-            # SLAKE has a 'q_lang' field — only keep English
-            q_lang = sample.get("q_lang", "en")
-            if q_lang != "en":
+            # SLAKE may have 'q_lang' field — only keep English
+            q_lang = sample.get("q_lang", sample.get("language", "en"))
+            if q_lang and str(q_lang).lower() not in ("en", "english"):
                 continue
 
-            image = sample.get("image")
-            question = sample.get("question", "")
-            answer = str(sample.get("answer", ""))
+            image = sample.get("image", sample.get("img", None))
+            question = sample.get("question", sample.get("Question", ""))
+            answer = str(sample.get("answer", sample.get("Answer", "")))
 
             if not question or not answer:
                 continue
@@ -127,8 +155,8 @@ def prepare_slake(output_dir: str, images_dir: str) -> list:
                     continue
 
             # SLAKE provides answer_type directly
-            q_type = sample.get("answer_type", "")
-            if q_type.lower() in ("closed", "yes/no"):
+            q_type = str(sample.get("answer_type", sample.get("Answer_type", "")))
+            if q_type.lower() in ("closed", "yes/no", "close"):
                 q_type = "closed"
             else:
                 q_type = classify_question_type(answer)
@@ -156,7 +184,7 @@ def prepare_pathvqa(output_dir: str, images_dir: str) -> list:
     print("Preparing PathVQA (flaviagiammarino/path-vqa)")
     print("=" * 60)
 
-    ds = load_dataset("flaviagiammarino/path-vqa", trust_remote_code=True)
+    ds = load_dataset("flaviagiammarino/path-vqa")
     img_dir = os.path.join(images_dir, "pathvqa")
     os.makedirs(img_dir, exist_ok=True)
 
@@ -196,27 +224,64 @@ def prepare_pathvqa(output_dir: str, images_dir: str) -> list:
 # =========================================================================
 # PMC-VQA
 # =========================================================================
+PMC_VQA_SOURCES = [
+    "xmcmic/PMC-VQA",
+    "hamzamooraj99/PMC-VQA-1",
+]
+
+
 def prepare_pmc_vqa(output_dir: str, images_dir: str) -> list:
     """Download and prepare PMC-VQA dataset."""
     print("\n" + "=" * 60)
-    print("Preparing PMC-VQA (xmcmic/PMC-VQA)")
+    print("Preparing PMC-VQA")
     print("=" * 60)
 
-    ds = load_dataset("xmcmic/PMC-VQA", trust_remote_code=True)
+    ds = None
+    for source in PMC_VQA_SOURCES:
+        try:
+            print(f"  Trying source: {source}")
+            ds = load_dataset(source)
+            print(f"  ✓ Loaded from: {source}")
+            break
+        except Exception as e:
+            print(f"  ✗ Failed: {e}")
+            continue
+
+    if ds is None:
+        print("  [ERROR] Could not load PMC-VQA from any source. Skipping.")
+        return []
+
     img_dir = os.path.join(images_dir, "pmc_vqa")
     os.makedirs(img_dir, exist_ok=True)
+
+    # Inspect columns
+    first_split = list(ds.keys())[0]
+    columns = ds[first_split].column_names
+    print(f"  Available columns: {columns}")
 
     all_samples = []
     for split_name in ds:
         split = ds[split_name]
         print(f"  Processing split '{split_name}': {len(split)} samples")
         for idx, sample in enumerate(tqdm(split, desc=f"  {split_name}")):
-            image = sample.get("image")
+            image = sample.get("image", None)
+
+            # PMC-VQA field names: "Question", "Answer" (capitalized)
             question = sample.get("Question", sample.get("question", ""))
             answer = str(sample.get("Answer", sample.get("answer", "")))
 
             if not question or not answer:
                 continue
+
+            # Handle image — may be PIL Image or just a path string
+            if image is None:
+                # Some PMC-VQA versions don't embed images directly
+                figure_path = sample.get("Figure_path", sample.get("figure_path", ""))
+                if figure_path:
+                    # Image not embedded — skip this sample
+                    continue
+                else:
+                    continue
 
             img_filename = f"pmc_vqa_{split_name}_{idx:06d}.jpg"
             img_path = os.path.join(img_dir, img_filename)
@@ -225,14 +290,19 @@ def prepare_pmc_vqa(output_dir: str, images_dir: str) -> list:
                 if not save_image(image, img_path):
                     continue
 
-            # PMC-VQA may have multiple choice — extract the answer
-            # Some entries have "Choice": "A", with options
-            choice = sample.get("Choice", "")
-            if choice and "A" in sample:
-                # It's multiple choice: extract the actual answer text
-                choice_key = choice.strip().upper()
-                answer_text = sample.get(choice_key, answer)
-                answer = str(answer_text).strip()
+            # PMC-VQA is multiple choice — extract the correct answer text
+            # Fields: "Choice A", "Choice B", "Choice C", "Choice D", "Answer_label"
+            answer_label = sample.get("Answer_label", sample.get("answer_label", ""))
+            if answer_label:
+                # Map label to the actual choice text
+                label = str(answer_label).strip().upper()
+                choice_key = f"Choice {label}"
+                choice_text = sample.get(choice_key, "")
+                if not choice_text:
+                    # Try alternate format: "Choice_A" or just "A"
+                    choice_text = sample.get(f"Choice_{label}", sample.get(label, ""))
+                if choice_text:
+                    answer = str(choice_text).strip()
 
             all_samples.append({
                 "image_path": os.path.abspath(img_path),
@@ -386,7 +456,13 @@ def main():
             print(f"Unknown dataset: {ds_name}")
             continue
 
-        samples = preparers[ds_name](args.output_dir, args.images_dir)
+        try:
+            samples = preparers[ds_name](args.output_dir, args.images_dir)
+        except Exception as e:
+            print(f"\n  [ERROR] Failed to prepare {ds_name}: {e}")
+            traceback.print_exc()
+            print(f"  Skipping {ds_name} and continuing with remaining datasets...\n")
+            continue
 
         if args.validate:
             samples = validate_data(samples)
@@ -421,6 +497,10 @@ def main():
     print(f"Pre-training samples: {len(pretrain_samples)}")
     print(f"Fine-tuning samples: {len(finetune_samples)}")
     print(f"Output directory: {args.output_dir}")
+
+    if not pretrain_samples and not finetune_samples:
+        print("\n[WARN] No data was prepared! Check the errors above.")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
