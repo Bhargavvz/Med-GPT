@@ -1,0 +1,40 @@
+# Data (re-downloadable from HuggingFace)
+data/images/
+data/processed/
+
+# Training artifacts
+wandb/
+*.pt
+*.bin
+
+# Checkpoints (except best adapter)
+checkpoints/pretrain/
+checkpoints/finetune/checkpoint-*/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.eggs/
+dist/
+build/
+*.so
+venv/
+.venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Results (optional — you may want to keep these)
+# results/
+
+# HuggingFace cache
+.cache/
