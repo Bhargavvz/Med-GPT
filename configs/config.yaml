@@ -33,8 +33,8 @@ training:
     data_file: "data/processed/pretrain_train.json"
     val_file: "data/processed/pretrain_val.json"
     num_epochs: 2
-    batch_size: 16
-    gradient_accumulation_steps: 2    # effective batch = 32
+    batch_size: 4
+    gradient_accumulation_steps: 8    # effective batch = 32
     learning_rate: 2.0e-4
     warmup_ratio: 0.05
     lr_scheduler: "cosine"
@@ -51,8 +51,8 @@ training:
     data_file: "data/processed/finetune_train.json"
     val_file: "data/processed/finetune_val.json"
     num_epochs: 5
-    batch_size: 8
-    gradient_accumulation_steps: 4    # effective batch = 32
+    batch_size: 4
+    gradient_accumulation_steps: 8    # effective batch = 32
     learning_rate: 2.0e-4
     warmup_ratio: 0.05
     lr_scheduler: "cosine"
