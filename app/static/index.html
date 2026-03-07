@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedGPT — Medical Visual Question Answering</title>
+    <meta name="description" content="AI-powered medical image analysis. Upload medical images and ask questions to get expert-level answers with visual explanations.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <!-- Animated background -->
+    <div class="bg-grid"></div>
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+    <div class="bg-glow bg-glow-3"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-inner">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                        <rect x="2" y="10" width="24" height="8" rx="2" fill="url(#grad1)" opacity="0.8"/>
+                        <rect x="10" y="2" width="8" height="24" rx="2" fill="url(#grad1)"/>
+                        <defs>
+                            <linearGradient id="grad1" x1="0" y1="0" x2="28" y2="28">
+                                <stop offset="0%" stop-color="#6366f1"/>
+                                <stop offset="100%" stop-color="#06b6d4"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <span class="logo-text">MedGPT</span>
+                <span class="logo-badge">AI</span>
+            </div>
+            <div class="header-status" id="modelStatus">
+                <span class="status-dot"></span>
+                <span class="status-text">Checking model...</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Input Section -->
+        <section class="input-section glass-card">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <span class="section-icon">🔬</span>
+                    Medical Image Analysis
+                </h2>
+                <p class="section-subtitle">Upload a medical image and ask any question about it</p>
+            </div>
+
+            <!-- Image Upload -->
+            <div class="upload-zone" id="uploadZone">
+                <div class="upload-content" id="uploadContent">
+                    <div class="upload-icon">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                            <path d="M24 4L24 32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                            <path d="M16 12L24 4L32 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M8 28V38C8 40.2091 9.79086 42 12 42H36C38.2091 42 40 40.2091 40 38V28" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <p class="upload-text">Drop medical image here or <span class="upload-link">browse</span></p>
+                    <p class="upload-hint">X-ray, CT, MRI, Ultrasound, or Pathology slide</p>
+                    <p class="upload-formats">JPEG, PNG, DICOM — max 50MB</p>
+                </div>
+                <div class="upload-preview" id="uploadPreview" style="display:none;">
+                    <img id="previewImage" src="" alt="Uploaded image">
+                    <button class="btn-remove" id="removeImage" title="Remove image">✕</button>
+                </div>
+                <input type="file" id="imageInput" accept="image/*" hidden>
+            </div>
+
+            <!-- Question Input -->
+            <div class="question-group">
+                <label for="questionInput" class="input-label">Your Question</label>
+                <div class="question-input-wrapper">
+                    <textarea id="questionInput" class="question-input" 
+                              placeholder="e.g., What abnormality is visible in this chest X-ray?"
+                              rows="2"></textarea>
+                    <button class="btn-analyze" id="analyzeBtn" disabled>
+                        <span class="btn-text">Analyze</span>
+                        <span class="btn-loader" style="display:none;">
+                            <svg class="spinner" width="20" height="20" viewBox="0 0 20 20">
+                                <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2.5" fill="none" stroke-dasharray="40 20" stroke-linecap="round"/>
+                            </svg>
+                        </span>
+                        <svg class="btn-arrow" width="18" height="18" viewBox="0 0 18 18" fill="none">
+                            <path d="M3 9H15M15 9L10 4M15 9L10 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Suggested Questions -->
+            <div class="suggestions">
+                <span class="suggestions-label">Try:</span>
+                <button class="suggestion-chip" data-q="What abnormality is visible in this image?">Abnormality?</button>
+                <button class="suggestion-chip" data-q="What organ is shown in this image?">Organ shown?</button>
+                <button class="suggestion-chip" data-q="Is there any sign of disease?">Disease sign?</button>
+                <button class="suggestion-chip" data-q="What imaging modality was used?">Modality?</button>
+                <button class="suggestion-chip" data-q="What is the diagnosis?">Diagnosis?</button>
+            </div>
+        </section>
+
+        <!-- Results Section -->
+        <section class="results-section" id="resultsSection" style="display:none;">
+            <!-- Answer Card -->
+            <div class="result-card glass-card answer-card">
+                <div class="result-header">
+                    <h3 class="result-title">
+                        <span class="result-icon">💡</span>
+                        Answer
+                    </h3>
+                    <span class="result-time" id="processingTime"></span>
+                </div>
+                <div class="result-body">
+                    <p class="answer-text" id="answerText"></p>
+                </div>
+            </div>
+
+            <!-- Visual Explanation -->
+            <div class="result-card glass-card visual-card">
+                <div class="result-header">
+                    <h3 class="result-title">
+                        <span class="result-icon">🔍</span>
+                        Visual Explanation (Grad-CAM)
+                    </h3>
+                </div>
+                <div class="result-body visual-body">
+                    <div class="image-comparison">
+                        <div class="comparison-item">
+                            <span class="comparison-label">Original</span>
+                            <img id="resultOriginal" src="" alt="Original image">
+                        </div>
+                        <div class="comparison-divider">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M5 12H19M19 12L14 7M19 12L14 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div class="comparison-item">
+                            <span class="comparison-label">Model Focus</span>
+                            <img id="resultHeatmap" src="" alt="Grad-CAM heatmap">
+                        </div>
+                    </div>
+                    <p class="visual-caption">
+                        Warm colors (red/yellow) indicate regions the model focused on to generate its answer.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Error Display -->
+        <div class="error-toast" id="errorToast" style="display:none;">
+            <span class="error-icon">⚠️</span>
+            <span class="error-message" id="errorMessage"></span>
+            <button class="error-close" id="errorClose">✕</button>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>MedGPT — Research & Educational Use Only. Not for clinical diagnosis.</p>
+    </footer>
+
+    <script src="/app.js"></script>
+</body>
+</html>

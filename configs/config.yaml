@@ -1,0 +1,126 @@
+# MedGPT Configuration
+# Medical Visual Question Answering System
+
+# =============================================================================
+# Model Configuration
+# =============================================================================
+model:
+  name: "Qwen/Qwen3-VL-8B-Instruct"
+  torch_dtype: "bfloat16"    # bf16 for Qwen models — fp16 causes instability
+  device_map: "auto"
+  trust_remote_code: true
+  # No quantization needed — H200 has 141GB VRAM
+  quantization: null
+
+# =============================================================================
+# LoRA Configuration
+# =============================================================================
+lora:
+  rank: 64
+  alpha: 128
+  dropout: 0.05
+  target_modules: "all-linear"    # Apply LoRA to all linear layers
+  task_type: "CAUSAL_LM"
+  bias: "none"
+
+# =============================================================================
+# Training Configuration
+# =============================================================================
+training:
+  # Stage 1: Pre-training on PMC-VQA
+  pretrain:
+    enabled: true
+    data_file: "data/processed/pretrain_train.json"
+    val_file: "data/processed/pretrain_val.json"
+    num_epochs: 2
+    batch_size: 16
+    gradient_accumulation_steps: 2    # effective batch = 32
+    learning_rate: 2.0e-4
+    warmup_ratio: 0.05
+    lr_scheduler: "cosine"
+    max_grad_norm: 1.0
+    output_dir: "checkpoints/pretrain"
+    eval_steps: 500
+    save_steps: 500
+    logging_steps: 10
+    max_seq_length: 1024
+
+  # Stage 2: Fine-tuning on VQA-RAD + SLAKE + PathVQA
+  finetune:
+    enabled: true
+    data_file: "data/processed/finetune_train.json"
+    val_file: "data/processed/finetune_val.json"
+    num_epochs: 5
+    batch_size: 8
+    gradient_accumulation_steps: 4    # effective batch = 32
+    learning_rate: 2.0e-4
+    warmup_ratio: 0.05
+    lr_scheduler: "cosine"
+    max_grad_norm: 1.0
+    output_dir: "checkpoints/finetune"
+    eval_steps: 100
+    save_steps: 100
+    logging_steps: 10
+    max_seq_length: 1024
+
+  # Common settings
+  bf16: true
+  fp16: false
+  seed: 42
+  dataloader_num_workers: 4
+  report_to: "wandb"    # or "tensorboard" or "none"
+
+# =============================================================================
+# Data Configuration
+# =============================================================================
+data:
+  processed_dir: "data/processed"
+  images_dir: "data/images"
+  datasets:
+    vqa_rad:
+      hf_name: "flaviagiammarino/vqa-rad"
+      enabled: true
+      stage: "finetune"
+    slake:
+      hf_name: "BoKelworker/SLAKE"
+      enabled: true
+      stage: "finetune"
+    path_vqa:
+      hf_name: "flaviagiammarino/path-vqa"
+      enabled: true
+      stage: "finetune"
+    pmc_vqa:
+      hf_name: "xmcmic/PMC-VQA"
+      enabled: true
+      stage: "pretrain"
+
+# =============================================================================
+# Inference Configuration
+# =============================================================================
+inference:
+  adapter_path: "checkpoints/finetune/best_model"
+  max_new_tokens: 256
+  temperature: 0.1
+  top_p: 0.9
+  do_sample: false    # greedy for evaluation, sample for chat
+
+# =============================================================================
+# Explainability Configuration
+# =============================================================================
+explainability:
+  grad_cam:
+    enabled: true
+    target_layer: "last"    # last vision encoder layer
+    colormap: "jet"
+    alpha: 0.4    # overlay transparency
+  attention_rollout:
+    enabled: true
+    head_fusion: "mean"    # mean, max, or min across heads
+
+# =============================================================================
+# Web Application Configuration
+# =============================================================================
+app:
+  host: "0.0.0.0"
+  port: 8000
+  max_upload_size_mb: 50
