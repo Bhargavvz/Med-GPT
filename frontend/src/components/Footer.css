@@ -1,0 +1,29 @@
+.footer {
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid var(--border-subtle);
+    padding: 24px 0;
+}
+
+.footer-inner {
+    text-align: center;
+}
+
+.footer-text {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.footer-credit {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.heart {
+    color: var(--error);
+}

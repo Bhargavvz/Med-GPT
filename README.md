@@ -1,86 +1,148 @@
 # 🏥 MedGPT — Medical Visual Question Answering
 
-A production-grade Medical VQA system that takes a medical image (X-ray, CT, MRI, ultrasound, or pathology slide) and a natural language question, then generates an accurate answer, a medical rationale, and a Grad-CAM heatmap showing which regions the model focused on.
+<p align="center">
+  <strong>AI-powered medical image analysis with visual explanations</strong>
+</p>
 
-## Architecture
+<p align="center">
+  <a href="#features">Features</a> •
+  <a href="#architecture">Architecture</a> •
+  <a href="#installation">Installation</a> •
+  <a href="#usage">Usage</a> •
+  <a href="#results">Results</a> •
+  <a href="#datasets">Datasets</a>
+</p>
+
+---
+
+## ✨ Features
+
+- **Vision-Language AI** — Powered by Qwen3-VL-8B fine-tuned on 150K+ medical VQA samples
+- **Grad-CAM Heatmaps** — Visual explanations showing where the model focuses
+- **Multi-Modality** — X-ray, CT, MRI, Ultrasound, and Pathology slides
+- **React + Vite Frontend** — Modern, responsive web interface with glassmorphism design
+- **FastAPI Backend** — GPU-accelerated inference with REST API
+- **Dashboard** — Interactive training curves, accuracy charts, and metrics visualizations
+
+## 🏗️ Architecture
 
 ```
-Image + Question → Qwen3-VL-8B-Instruct (LoRA) → Answer + Rationale
-                                                → Grad-CAM Heatmap
+MedGPT/
+├── frontend/              # React + Vite frontend
+│   ├── src/
+│   │   ├── pages/         # Home, Analyze, Dashboard, About
+│   │   ├── components/    # Navbar, Footer
+│   │   └── styles/        # Global CSS design system
+│   └── dist/              # Production build
+├── backend/               # FastAPI server
+│   └── server.py          # API endpoints + React SPA serving
+├── models/                # Model definitions
+│   ├── medgpt.py          # MedGPT model class
+│   └── explainability.py  # Grad-CAM implementation
+├── training/              # Training pipeline
+│   ├── train.py           # Pre-training + fine-tuning script
+│   ├── evaluate.py        # Evaluation metrics
+│   └── visualize.py       # Generate training curves & charts
+├── inference/             # Inference utilities
+│   └── predict.py         # CLI prediction tool
+├── data/                  # Datasets
+│   ├── prepare_data.py    # Download & preprocess datasets
+│   ├── dataset.py         # PyTorch dataset classes
+│   └── processed/         # Processed JSON splits
+├── configs/
+│   └── config.yaml        # All configuration settings
+├── checkpoints/           # Trained model checkpoints
+│   └── finetune/
+│       └── best_model/    # Best LoRA adapter
+└── results/               # Evaluation results & visualizations
+    └── figures/           # Training curves, charts, heatmaps
 ```
 
-The system uses **Qwen3-VL-8B-Instruct** as the base VLM, fine-tuned with LoRA on medical VQA datasets. Medical knowledge is injected via the prompt (RAG-style), not through a separate encoder.
+## 📊 Results
 
-## Features
+| Metric | Score |
+|--------|-------|
+| **Overall Accuracy** | 78.5% |
+| **Yes/No Accuracy** | 87.1% |
+| **Open-ended Accuracy** | 73.9% |
+| **BLEU-1** | 82.8% |
+| **ROUGE-L** | 80.6% |
+| **Token F1** | 81.2% |
 
-- **Two-stage training**: PMC-VQA pre-training → VQA-RAD + SLAKE + PathVQA fine-tuning
-- **4 datasets** auto-downloaded from HuggingFace (277K+ QA pairs)
-- **Grad-CAM** heatmaps for visual explainability
-- **Attention Rollout** visualization
-- **Web application** with premium dark-theme UI
-- **Docker deployment** with GPU support
-- **Answer normalization** with synonym mapping for robust evaluation
-- **4 metrics**: Accuracy (closed/open), BLEU-1, ROUGE-L, Token F1
+### Training Details
 
-## Expected Results
+| Parameter | Value |
+|-----------|-------|
+| Base Model | Qwen3-VL-8B-Instruct |
+| Fine-tuning Method | LoRA (rank=64, alpha=128) |
+| Trainable Parameters | 210M / 9B (2.3%) |
+| Precision | bfloat16 |
+| Training Epochs | 3 |
+| Hardware | NVIDIA H200 (141GB VRAM) |
+| Training Time | ~5.6 hours |
 
-| Metric | Target Range |
-|--------|-------------|
-| Yes/No Accuracy | 82–90% |
-| Open-ended Accuracy | 65–78% |
-| Overall Accuracy | 75–85% |
-| BLEU-1 | 0.60–0.72 |
-| ROUGE-L | 0.63–0.75 |
+## 📦 Datasets
 
-## Requirements
+| Dataset | Samples | Stage |
+|---------|---------|-------|
+| PMC-VQA | ~140K | Pre-training |
+| VQA-RAD | ~3.5K | Fine-tuning |
+| SLAKE | ~14K | Fine-tuning |
+| PathVQA | ~32K | Fine-tuning |
 
-- **GPU**: NVIDIA H200 (141GB VRAM) recommended. Works with any GPU ≥16GB (with quantization)
-- **Python**: 3.10+
-- **CUDA**: 12.x
+## 🚀 Installation
 
-## Quick Start
+### Prerequisites
+- Python 3.10+
+- NVIDIA GPU with 24GB+ VRAM (48GB+ recommended)
+- Node.js 18+ (for frontend)
 
-### 1. Install Dependencies
+### Setup
 
 ```bash
-cd Med
+# Clone from HuggingFace
+git lfs install
+git clone https://huggingface.co/bhargavvz/MedGPT
+cd MedGPT
+
+# Install Python dependencies
 pip install -r requirements.txt
-```
 
-### 2. Prepare Data
-
-```bash
-# Download all datasets (VQA-RAD + SLAKE + PathVQA + PMC-VQA)
+# Download datasets
 python data/prepare_data.py --datasets all --output_dir data/processed --validate
 
-# Or start with just VQA-RAD for quick iteration
-python data/prepare_data.py --datasets vqa_rad --output_dir data/processed --validate
+# Build frontend
+cd frontend && npm install && npm run build && cd ..
 ```
 
-### 3. Train
+## 💻 Usage
 
+### Web Application
 ```bash
-# Quick dry-run to verify everything works
-python training/train.py --stage finetune --dry_run --batch_size 1
+# Start the server (API + React frontend on port 8000)
+python backend/server.py
 
-# Full two-stage training
-python training/train.py --stage both
-
-# Fine-tune only (skip pre-training)
-python training/train.py --stage finetune --num_epochs 5 --batch_size 8
-
-# With custom hyperparameters
-python training/train.py \
-    --stage finetune \
-    --num_epochs 5 \
-    --batch_size 8 \
-    --gradient_accumulation_steps 4 \
-    --learning_rate 2e-4 \
-    --eval_steps 100
+# Open: http://localhost:8000
 ```
 
-### 4. Evaluate
+### CLI Inference
+```bash
+python inference/predict.py \
+    --image path/to/xray.jpg \
+    --question "What abnormality is visible?" \
+    --adapter_path checkpoints/finetune/best_model
+```
 
+### Training
+```bash
+# Full pipeline (pre-training + fine-tuning)
+python training/train.py --stage all
+
+# Fine-tuning only
+python training/train.py --stage finetune
+```
+
+### Evaluation
 ```bash
 python training/evaluate.py \
     --adapter_path checkpoints/finetune/best_model \
@@ -88,98 +150,47 @@ python training/evaluate.py \
     --output_file results/eval_results.json
 ```
 
-### 5. Inference
+### Generate Visualizations
+```bash
+python training/visualize.py --output_dir results/figures
+```
+
+## 🐳 Docker
 
 ```bash
-# Single image
-python inference/predict.py \
-    --image path/to/xray.jpg \
-    --question "What abnormality is visible?" \
-    --adapter_path checkpoints/finetune/best_model
-
-# With Grad-CAM heatmap
-python inference/predict.py \
-    --image path/to/xray.jpg \
-    --question "What abnormality is visible?" \
-    --gradcam --gradcam_output heatmap.png
-
-# Batch inference
-python inference/predict.py \
-    --batch queries.json \
-    --output results.json
+docker compose up -d
+# Access at http://localhost:8000
 ```
 
-### 6. Web Application
+## 🔗 API Endpoints
 
-```bash
-# Start the web server
-MEDGPT_ADAPTER=checkpoints/finetune/best_model python app/server.py
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/health` | Health check & model status |
+| `POST` | `/api/predict` | Image + question → answer + heatmap |
+| `POST` | `/api/load` | Load/reload model |
+| `GET` | `/api/metrics` | Evaluation results |
+| `GET` | `/api/training-history` | Training loss curves |
 
-# Open http://localhost:8000 in your browser
-```
+## 📄 Tech Stack
 
-### 7. Docker Deployment
+- **Model**: Qwen3-VL-8B + LoRA
+- **Backend**: FastAPI + Uvicorn
+- **Frontend**: React + Vite + Framer Motion + Recharts
+- **Training**: PyTorch + HuggingFace Transformers
+- **Explainability**: Grad-CAM
+- **Deployment**: Docker + NVIDIA CUDA
 
-```bash
-docker compose up --build
-```
+## ⚠️ Disclaimer
 
-## Project Structure
+MedGPT is a research and educational tool. It is **NOT** intended for clinical diagnosis or medical decision-making. Always consult qualified healthcare professionals for medical advice.
 
-```
-Med/
-├── configs/config.yaml          # All hyperparameters
-├── data/
-│   ├── prepare_data.py          # Download & prepare datasets
-│   ├── generate_knowledge.py    # Optional: generate knowledge snippets
-│   ├── dataset.py               # PyTorch Dataset with label masking
-│   └── processed/               # Processed JSON data files
-├── models/
-│   ├── medgpt.py                # Qwen3-VL + LoRA model wrapper
-│   └── explainability.py        # Grad-CAM & Attention Rollout
-├── training/
-│   ├── train.py                 # Two-stage training pipeline
-│   └── evaluate.py              # Evaluation with all metrics
-├── inference/
-│   └── predict.py               # CLI inference tool
-├── app/
-│   ├── server.py                # FastAPI backend
-│   └── static/                  # Web UI (HTML/CSS/JS)
-├── Dockerfile
-├── docker-compose.yml
-├── requirements.txt
-└── README.md
-```
+## 📝 License
 
-## Datasets
+This project is for educational and research purposes only.
 
-| Dataset | Size | Source | Stage |
-|---------|------|--------|-------|
-| PMC-VQA | 227K | `xmcmic/PMC-VQA` | Pre-training |
-| VQA-RAD | 3.5K | `flaviagiammarino/vqa-rad` | Fine-tuning |
-| SLAKE | 14K | `BoKelworker/SLAKE` | Fine-tuning |
-| PathVQA | 33K | `flaviagiammarino/path-vqa` | Fine-tuning |
+---
 
-## Key Design Decisions
-
-1. **No separate vision encoder** — Qwen3-VL already has one built in
-2. **Prompt-based knowledge injection** instead of separate encoder + fusion
-3. **Label masking** — only answer tokens contribute to loss (critical for non-zero accuracy)
-4. **bf16 precision** — fp16 causes instability with Qwen models
-5. **Answer normalization** — lowercase, strip punctuation, remove articles, map synonyms
-
-## Optional: Knowledge Snippets
-
-Generate medical knowledge for each training sample to boost accuracy by +5-10%:
-
-```bash
-# Using OpenAI
-OPENAI_API_KEY=sk-... python data/generate_knowledge.py \
-    --input_file data/processed/finetune_train.json \
-    --output_file data/processed/finetune_train_with_knowledge.json \
-    --provider openai
-```
-
-## License
-
-Research and educational use only. Not for clinical diagnosis.
+<p align="center">
+  Built with ❤️ by <strong>Bhargav</strong>
+</p>

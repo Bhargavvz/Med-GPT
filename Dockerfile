@@ -45,7 +45,7 @@ ENV HF_HOME=/app/.cache/huggingface
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')" || exit 1
 
 # Default: run the web application
-CMD ["python", "app/server.py"]
+CMD ["python", "backend/server.py"]

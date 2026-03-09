@@ -1,0 +1,282 @@
+.about-page {
+    padding: 32px 0 80px;
+}
+
+.about-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.about-header h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.about-header p {
+    color: var(--text-secondary);
+}
+
+.about-intro {
+    padding: 32px;
+    margin-bottom: 32px;
+}
+
+.about-intro h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+
+.about-intro p {
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: 12px;
+    font-size: 0.95rem;
+}
+
+.about-intro strong {
+    color: var(--accent-primary);
+}
+
+/* How it Works */
+.how-it-works {
+    margin-bottom: 32px;
+}
+
+.section-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.steps-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.step-card {
+    padding: 24px;
+    text-align: center;
+    position: relative;
+}
+
+.step-number {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    font-size: 2rem;
+    font-weight: 800;
+    color: rgba(99, 102, 241, 0.1);
+}
+
+.step-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--accent-primary);
+    margin: 0 auto 12px;
+}
+
+.step-card h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.step-card p {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+/* Architecture */
+.architecture {
+    padding: 32px;
+    margin-bottom: 32px;
+}
+
+.architecture h2 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+.arch-diagram {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.arch-block {
+    padding: 20px 28px;
+    border-radius: var(--radius-md);
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-subtle);
+    text-align: center;
+}
+
+.arch-block.highlight {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+.arch-label {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.arch-block span:last-child {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.arch-arrow {
+    font-size: 1.4rem;
+    color: var(--text-muted);
+}
+
+/* Datasets */
+.datasets-section {
+    padding: 32px;
+    margin-bottom: 32px;
+}
+
+.datasets-section h2 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.datasets-table {
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.table-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    padding: 12px 16px;
+    background: rgba(0, 0, 0, 0.3);
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+}
+
+.table-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border-subtle);
+    font-size: 0.88rem;
+    align-items: center;
+}
+
+.dataset-name {
+    font-weight: 500;
+}
+
+.stage-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.72rem;
+    font-weight: 500;
+}
+
+.stage-badge.pretrain {
+    background: rgba(99, 102, 241, 0.15);
+    color: var(--accent-primary);
+}
+
+.stage-badge.finetune {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--success);
+}
+
+/* Tech Stack */
+.tech-section {
+    margin-bottom: 32px;
+}
+
+.tech-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+.tech-chip {
+    padding: 16px;
+    text-align: center;
+}
+
+.tech-name {
+    display: block;
+    font-size: 0.88rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.tech-desc {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+/* Disclaimer */
+.disclaimer {
+    padding: 24px 28px;
+    margin-top: 16px;
+}
+
+.disclaimer h3 {
+    font-size: 1rem;
+    margin-bottom: 8px;
+}
+
+.disclaimer p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.disclaimer strong {
+    color: var(--error);
+}
+
+@media (max-width: 768px) {
+    .steps-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .tech-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .arch-diagram {
+        flex-direction: column;
+    }
+
+    .arch-arrow {
+        transform: rotate(90deg);
+    }
+}

@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
 MedGPT Web Application — FastAPI Backend
-Upload an image, ask a question, get answer + rationale + Grad-CAM heatmap.
+Serves the React frontend + API endpoints for prediction, metrics, and health checks.
 """
 
 import base64
 import io
+import json
 import os
 import sys
 import tempfile
@@ -17,7 +18,7 @@ import uvicorn
 import yaml
 from fastapi import FastAPI, File, Form, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from PIL import Image
 
@@ -27,7 +28,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 app = FastAPI(
     title="MedGPT — Medical Visual Question Answering",
     description="Upload a medical image and ask questions about it.",
-    version="1.0.0",
+    version="2.0.0",
 )
 
 # CORS
@@ -73,11 +74,15 @@ async def startup_event():
         load_model()
     except Exception as e:
         print(f"[WARN] Failed to load model at startup: {e}")
-        print("The model can be loaded later via /load endpoint")
+        print("The model can be loaded later via /api/load endpoint")
         traceback.print_exc()
 
 
-@app.get("/health")
+# =========================================================================
+# API Routes (prefixed with /api/)
+# =========================================================================
+
+@app.get("/api/health")
 async def health_check():
     """Health check endpoint."""
     return {
@@ -86,7 +91,7 @@ async def health_check():
     }
 
 
-@app.post("/predict")
+@app.post("/api/predict")
 async def predict(
     image: UploadFile = File(...),
     question: str = Form(...),
@@ -99,7 +104,7 @@ async def predict(
     Accepts an image and question, returns answer + explanation + heatmap.
     """
     if medgpt_model is None:
-        raise HTTPException(status_code=503, detail="Model not loaded. Please wait or call /load")
+        raise HTTPException(status_code=503, detail="Model not loaded. Please wait or call /api/load")
 
     start_time = time.time()
 
@@ -108,7 +113,6 @@ async def predict(
         contents = await image.read()
         img = Image.open(io.BytesIO(contents)).convert("RGB")
 
-        # Save to temp file (model needs a file path)
         with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
             img.save(tmp, "JPEG", quality=95)
             tmp_path = tmp.name
@@ -134,7 +138,6 @@ async def predict(
                     question=question,
                     knowledge=knowledge,
                 )
-                # Convert overlay to base64
                 buf = io.BytesIO()
                 overlay.save(buf, format="PNG")
                 heatmap_b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
@@ -142,7 +145,7 @@ async def predict(
                 print(f"[WARN] Grad-CAM failed: {e}")
                 heatmap_b64 = None
 
-        # Convert original image to base64 for response
+        # Convert original image to base64
         buf = io.BytesIO()
         img.save(buf, format="PNG")
         original_b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
@@ -159,12 +162,11 @@ async def predict(
         })
 
     finally:
-        # Clean up temp file
         if os.path.exists(tmp_path):
             os.unlink(tmp_path)
 
 
-@app.post("/load")
+@app.post("/api/load")
 async def load_model_endpoint(
     adapter_path: str = Form(default=None),
     config_path: str = Form(default="configs/config.yaml"),
@@ -184,10 +186,62 @@ async def load_model_endpoint(
         raise HTTPException(status_code=500, detail=f"Failed to load model: {e}")
 
 
-# Serve static files (web UI)
-static_dir = Path(__file__).parent / "static"
-if static_dir.exists():
-    app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
+@app.get("/api/metrics")
+async def get_metrics():
+    """Serve evaluation results."""
+    project_root = Path(__file__).parent.parent
+    results_path = project_root / "results" / "eval_results.json"
+
+    if not results_path.exists():
+        # Also check checkpoints directory
+        alt_path = project_root / "checkpoints" / "finetune" / "eval_results.json"
+        if alt_path.exists():
+            results_path = alt_path
+        else:
+            raise HTTPException(status_code=404, detail="No evaluation results found. Run evaluate.py first.")
+
+    with open(results_path) as f:
+        data = json.load(f)
+
+    # Return just metrics (not all predictions)
+    return data.get("metrics", data)
+
+
+@app.get("/api/training-history")
+async def get_training_history():
+    """Serve trainer_state.json for training curves."""
+    project_root = Path(__file__).parent.parent
+
+    # Find trainer_state.json in checkpoint dirs
+    for ckpt in ["checkpoint-2472", "checkpoint-2000", "checkpoint-1500"]:
+        path = project_root / "checkpoints" / "finetune" / ckpt / "trainer_state.json"
+        if path.exists():
+            with open(path) as f:
+                return json.load(f)
+
+    raise HTTPException(status_code=404, detail="No training history found.")
+
+
+# =========================================================================
+# Serve React Frontend (must be LAST)
+# =========================================================================
+
+# Serve React build
+frontend_dist = Path(__file__).parent.parent / "frontend" / "dist"
+if frontend_dist.exists():
+    # Serve static assets
+    app.mount("/assets", StaticFiles(directory=str(frontend_dist / "assets")), name="assets")
+
+    # Catch-all for React Router (SPA)
+    @app.get("/{path:path}")
+    async def serve_react(path: str):
+        """Serve React app — fallback to index.html for client-side routing."""
+        file_path = frontend_dist / path
+        if file_path.is_file():
+            return FileResponse(str(file_path))
+        return FileResponse(str(frontend_dist / "index.html"))
+else:
+    print("[INFO] No React build found at frontend/dist/. Run: cd frontend && npm run build")
 
 
 def main():
@@ -201,6 +255,11 @@ def main():
     except Exception:
         host = "0.0.0.0"
         port = 8000
+
+    print(f"\n🚀 MedGPT server starting on http://{host}:{port}")
+    if frontend_dist.exists():
+        print(f"📦 Serving React build from: {frontend_dist}")
+    print()
 
     uvicorn.run(app, host=host, port=port)
 

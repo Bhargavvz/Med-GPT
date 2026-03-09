@@ -1,0 +1,133 @@
+.dashboard-page {
+    padding: 32px 0 80px;
+}
+
+.dashboard-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.dashboard-header h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.dashboard-header p {
+    color: var(--text-secondary);
+}
+
+.dashboard-loading {
+    text-align: center;
+    padding: 80px 0;
+    color: var(--text-muted);
+}
+
+.loader {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border-subtle);
+    border-top-color: var(--accent-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 16px;
+}
+
+.dashboard-empty {
+    text-align: center;
+    padding: 60px 32px;
+    color: var(--text-muted);
+}
+
+.dashboard-empty h2 {
+    margin: 16px 0 8px;
+    color: var(--text-primary);
+}
+
+.dashboard-empty code {
+    display: block;
+    margin-top: 16px;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-family: var(--font-mono);
+    word-break: break-all;
+    color: var(--accent-secondary);
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.summary-card {
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.summary-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.summary-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    display: block;
+}
+
+.summary-label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.chart-card {
+    padding: 24px;
+}
+
+.chart-card h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: var(--text-secondary);
+}
+
+.chart-wide {
+    grid-column: span 2;
+}
+
+@media (max-width: 768px) {
+    .summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .chart-wide {
+        grid-column: span 1;
+    }
+}
