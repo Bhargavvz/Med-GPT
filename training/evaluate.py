@@ -258,9 +258,10 @@ def run_full_evaluation(
     datasets = []
     results = []
 
-    for i, sample in enumerate(test_data):
+    from tqdm import tqdm
+
+    for i, sample in enumerate(tqdm(test_data, desc="Evaluating", ncols=80)):
         if not os.path.exists(sample["image_path"]):
-            print(f"  [{i}] SKIP: Missing image {sample['image_path']}")
             continue
 
         try:
@@ -272,7 +273,6 @@ def run_full_evaluation(
                 do_sample=False,
             )
         except Exception as e:
-            print(f"  [{i}] ERROR: {e}")
             pred = ""
 
         predictions.append(pred)
@@ -293,8 +293,8 @@ def run_full_evaluation(
 
         if verbose and i < 10:
             status = "✓" if results[-1]["correct"] else "✗"
-            print(f"  [{i}] {status} Q: {sample['question'][:50]}")
-            print(f"         Pred: {pred[:50]} | Ref: {sample['answer'][:50]}")
+            tqdm.write(f"  [{i}] {status} Q: {sample['question'][:50]}")
+            tqdm.write(f"         Pred: {pred[:50]} | Ref: {sample['answer'][:50]}")
 
     # Compute metrics
     metrics = compute_metrics_from_predictions(predictions, references, question_types)
