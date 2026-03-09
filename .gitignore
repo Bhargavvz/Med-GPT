@@ -16,6 +16,9 @@ data/images/
 *.bmp
 *.tiff
 
+# Keep visualization figures
+!results/figures/**
+
 # ===== Training artifacts =====
 wandb/
 *.wandb
