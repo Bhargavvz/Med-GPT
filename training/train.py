@@ -146,6 +146,9 @@ def train_stage(
         stage_config["save_steps"] = 2
         stage_config["logging_steps"] = 1
 
+    # Determine max_steps: CLI arg > stage config > default (-1 = full)
+    effective_max_steps = max_steps if max_steps > 0 else stage_config.get("max_steps", -1)
+
     # Training arguments
     output_dir = stage_config["output_dir"]
     training_args = TrainingArguments(
@@ -173,7 +176,7 @@ def train_stage(
         seed=config["training"].get("seed", 42),
         dataloader_num_workers=config["training"].get("dataloader_num_workers", 4),
         remove_unused_columns=False,
-        max_steps=max_steps if max_steps > 0 else -1,
+        max_steps=effective_max_steps if effective_max_steps > 0 else -1,
         dataloader_pin_memory=True,
         gradient_checkpointing=True,
         gradient_checkpointing_kwargs={"use_reentrant": False},
