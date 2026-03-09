@@ -51,7 +51,7 @@ training:
     enabled: true
     data_file: "data/processed/finetune_train.json"
     val_file: "data/processed/finetune_val.json"
-    num_epochs: 2
+    num_epochs: 3
     max_steps: -1               # -1 = train full epochs
     batch_size: 4
     gradient_accumulation_steps: 8    # effective batch = 32
