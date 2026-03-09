@@ -1,10 +1,24 @@
 # syntax=docker/dockerfile:1
-# MedGPT — Medical Visual Question Answering System
-# Docker image with NVIDIA CUDA support for GPU inference
+# MedGPT — Full Stack Docker Image
+# Stage 1: Build React frontend
+# Stage 2: Run FastAPI + GPU inference
 
+# ============================================
+# Stage 1: Build Frontend
+# ============================================
+FROM node:20-slim AS frontend-build
+
+WORKDIR /build
+COPY frontend/package*.json ./
+RUN npm ci
+COPY frontend/ ./
+RUN npm run build
+
+# ============================================
+# Stage 2: Runtime with CUDA
+# ============================================
 FROM nvidia/cuda:12.4.0-runtime-ubuntu22.04
 
-# Prevent interactive prompts during build
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
 
@@ -22,24 +36,33 @@ RUN apt-get update && apt-get install -y \
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1 \
     && update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1
 
-# Create app directory
 WORKDIR /app
 
-# Copy requirements and install dependencies
+# Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY . .
+COPY backend/ ./backend/
+COPY models/ ./models/
+COPY training/ ./training/
+COPY inference/ ./inference/
+COPY data/dataset.py data/__init__.py ./data/
+COPY data/processed/ ./data/processed/
+COPY configs/ ./configs/
+COPY checkpoints/ ./checkpoints/
 
-# Create data and checkpoint directories
-RUN mkdir -p data/processed data/images checkpoints
+# Copy frontend build from Stage 1
+COPY --from=frontend-build /build/dist ./frontend/dist
 
-# Expose web application port
+# Create directories
+RUN mkdir -p results data/images
+
+# Expose port
 EXPOSE 8000
 
-# Environment variables
+# Environment
 ENV MEDGPT_CONFIG=/app/configs/config.yaml
 ENV HF_HOME=/app/.cache/huggingface
 
@@ -47,5 +70,5 @@ ENV HF_HOME=/app/.cache/huggingface
 HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')" || exit 1
 
-# Default: run the web application
+# Run server
 CMD ["python", "backend/server.py"]

@@ -7,9 +7,10 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./data:/app/data
       - ./checkpoints:/app/checkpoints
       - ./configs:/app/configs
+      - ./data/processed:/app/data/processed
+      - ./results:/app/results
       - huggingface-cache:/app/.cache/huggingface
     environment:
       - MEDGPT_CONFIG=/app/configs/config.yaml
